@@ -2,11 +2,14 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcryt from "bcrypt";
 import User from "../models/userModel";
+import { validationResult } from "express-validator";
 
 class AuthController {
     async register(req: Request, res: Response) {
         const { name, email, password } = req.body;
         try {
+            const result = validationResult(req);
+            if (!result.isEmpty()) return res.status(400).json(result.array());
             // check for empty field
             if (!name && !email && !password)
                 return res.status(400).json({
@@ -56,6 +59,8 @@ class AuthController {
         const { email, password } = req.body;
         const cookies = req.cookies;
         try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) return res.status(400).json(errors.array());
             // find user
             const user = await User.findOne({ email });
             // check valid user
@@ -84,7 +89,6 @@ class AuthController {
                 sameSite: "strict",
                 maxAge: 30 * 24 * 60 * 60 * 1000,
             });
-            console.log(cookies);
 
             res.status(200).json({
                 user,

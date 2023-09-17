@@ -23,10 +23,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 import authRoute from "./routers/authRoute";
 import postRoute from "./routers/postRoute";
 import userRoute from "./routers/userRoute";
+import commentRouter from "./routers/commentRouter";
 
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/post", postRoute);
 app.use("/api/v1/users", userRoute);
+app.use("/api/v1/comment", commentRouter);
 
 connectDb();
 const port = process.env.PORT as string;

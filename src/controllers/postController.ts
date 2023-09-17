@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import Post from "../models/postModel";
+import User from "../models/userModel";
+import Comment from "../models/commentModel";
 
 class PostController {
     async gettAllPosts(req: Request, res: Response) {
@@ -42,6 +44,12 @@ class PostController {
                     contentType: req.file?.mimetype,
                 },
             }).save();
+
+            const user = await User.findById(userId);
+
+            user?.posts.push(post._id);
+            await user?.save();
+
             res.status(200).json({ post });
         } catch (error) {
             if (error instanceof Error) {
@@ -55,11 +63,17 @@ class PostController {
             const { id } = req.params;
 
             const post = await Post.findById(id);
+            const comments = await Comment.find({ post: id }).sort(
+                "-createdAt"
+            );
 
             if (!post)
                 return res.status(404).json({ message: "post not found" });
 
-            res.json(post);
+            res.json({
+                post,
+                comments,
+            });
         } catch (error) {
             if (error instanceof Error) {
                 return res.status(500).json({ message: error.message });
