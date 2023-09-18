@@ -68,7 +68,7 @@ class AuthController {
                 return res.status(400).json({ message: "ابتدا ثبت نام کنید" });
 
             // check valid password
-            const isCompare = bcryt.compare(password, user.password as string);
+            const isCompare = await bcryt.compare(password, user.password as string);
 
             if (!isCompare)
                 return res.status(400).json({ message: "پسور درست نیست" });
