@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcryt from "bcrypt";
+import nodemailer from "nodemailer";
 import User from "../models/userModel";
 import { validationResult } from "express-validator";
+import { transport } from "../utils/nodeMailer";
 
 class AuthController {
     async register(req: Request, res: Response) {
@@ -97,6 +99,63 @@ class AuthController {
                 user,
                 accessToken,
             });
+        } catch (error) {
+            if (error instanceof Error) {
+                res.status(500).json({ message: error.message });
+            }
+        }
+    }
+
+    async forgotPassword(req: Request, res: Response) {
+        try {
+            const { email } = req.body;
+            const error = validationResult(req);
+            if (!error.isEmpty()) return res.status(400).json(error.array());
+
+            const user = await User.findOne({ email });
+
+            if (!user)
+                return res.status(404).json({ message: "user not found" });
+
+            const forgotToken = await jwt.sign(
+                { email: user.email },
+                process.env.SECRET_TOKEN as unknown as string,
+                { expiresIn: "15m" }
+            );
+
+            const link = `http://localhost:3000/api/v1/auth/forgot-password/${forgotToken}/${user.password}`;
+
+            await transport.sendMail({
+                from: process.env.MY_EMAIL,
+                to: email,
+                subject: "forgot password",
+                text: link,
+            });
+
+            res.status(201).json({ message: "ok!" });
+        } catch (error) {
+            if (error instanceof Error) {
+                res.status(500).json({ message: error.message });
+            }
+        }
+    }
+
+    async changeForgotPassword(req: Request, res: Response) {
+        try {
+            const { token } = req.params;
+            const { password } = req.body;
+
+            const { email }: string | any = await jwt.verify(
+                token,
+                process.env.SECRET_TOKEN as unknown as string
+            );
+
+            if (!email)
+                return res.status(400).json({ message: "email not valid" });
+
+            const user = await User.findOneAndUpdate({ email }, { password });
+
+            res.status(201).json({ user });
         } catch (error) {
             if (error instanceof Error) {
                 res.status(500).json({ message: error.message });
