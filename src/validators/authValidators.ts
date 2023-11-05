@@ -25,3 +25,9 @@ export const loginValidator = () => {
             .withMessage("پسورد واقعی وارد کنید"),
     ];
 };
+
+export const forgotValidator = () => {
+    return [
+        body("email").isEmail().notEmpty().withMessage("ایمیل واقعی وارد کنید"),
+    ];
+};
